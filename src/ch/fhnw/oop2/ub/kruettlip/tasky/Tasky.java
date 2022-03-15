@@ -18,6 +18,7 @@ public class Tasky {
 
     public Tasky() {
         commands.put("list", this::listTasks);
+        commands.put("filter", this::filterTasks);
         commands.put("add", this::createTask);
         commands.put("update", this::modifyTask);
         commands.put("delete", this::deleteTask);
@@ -62,6 +63,18 @@ public class Tasky {
             System.out.println();
             return;
         }
+        sortTasks(tasks);
+        printTasks(tasks);
+    }
+
+    private void printTasks(List<Task> tasks) {
+        for (Task task : tasks) {
+            System.out.println(task);
+        }
+        System.out.println();
+    }
+
+    private void sortTasks(List<Task> tasks) {
         System.out.print("Order by (t=title, d=description, z=date, s=state): ");
         String orderBy = scanner.nextLine();
         System.out.print("Reverse order? [y/N] ");
@@ -72,10 +85,15 @@ public class Tasky {
                 : orderingFunctions.get(orderBy);
             tasks.sort(orderingFunction);
         }
-        for (Task task : tasks) {
-            System.out.println(task);
-        }
-        System.out.println();
+    }
+
+    private void filterTasks() {
+        System.out.print("Filter by state. ("+ String.join("|", TaskState.names()) +"): ");
+        String filterCriteria = scanner.nextLine();
+        List<Task> tasks = repository.getAll().stream()
+        .filter(t -> t.getState().name().toLowerCase().equals(filterCriteria.toLowerCase()))
+        .collect(Collectors.toList());
+        printTasks(tasks);
     }
 
     private void createTask() {
