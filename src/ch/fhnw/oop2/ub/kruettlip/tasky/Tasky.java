@@ -12,7 +12,7 @@ public class Tasky {
     private IRepository<Task> repository = new InMemoryRepository();
     private Task selectedTask = null;
     private Map<String, Command> commands = new HashMap<>();
-    private Map<String, Comparator<? super Task>> orderingFunctions = new HashMap<>();
+    private Map<String, Comparator<Task>> orderingFunctions = new HashMap<>();
     private Scanner scanner;
     private boolean quit = false;
 
@@ -68,7 +68,7 @@ public class Tasky {
         String reverseOrderString = scanner.nextLine();
         boolean reverseOrder = !reverseOrderString.isEmpty() || reverseOrderString.toLowerCase().equals("y");
         if (orderingFunctions.containsKey(orderBy)){
-            Comparator<? super Task> orderingFunction = reverseOrder ? orderingFunctions.get(orderBy).reversed()
+            Comparator<Task> orderingFunction = reverseOrder ? orderingFunctions.get(orderBy).reversed()
                 : orderingFunctions.get(orderBy);
             tasks.sort(orderingFunction);
         }
