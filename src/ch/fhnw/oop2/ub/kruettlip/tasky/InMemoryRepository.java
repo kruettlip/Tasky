@@ -1,36 +1,34 @@
 package ch.fhnw.oop2.ub.kruettlip.tasky;
 
-import java.util.ArrayList;
+import static java.util.stream.Collectors.toList;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class InMemoryRepository implements IRepository<Task> {
-    private List<Task> tasks = new ArrayList<>();
+    private Map<UUID, Task> tasks = new HashMap<>();
 
     public List<Task> getAll() {
-        return tasks;
+        return tasks.values().stream().collect(toList());
     }
 
     public Task get(UUID id) {
-        for (Task task : tasks) {
-            if (task.getId().equals(id))
-                return task;
-        }
-        return null;
+        return tasks.get(id);
     }
 
     public void add(Task task) {
-        tasks.add(task);
+        UUID id = UUID.randomUUID();
+        task.setId(id);
+        tasks.put(id, task);
     }
 
     public void update(Task task) {
-        int index = tasks.indexOf(task);
-        if (index >= 0) {
-            tasks.set(index, task);
-        }
+        tasks.put(task.getId(), task);
     }
 
     public void delete(Task task) {
-        tasks.remove(task);
+        tasks.remove(task.getId());
     }    
 }

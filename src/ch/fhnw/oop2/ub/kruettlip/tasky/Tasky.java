@@ -16,7 +16,20 @@ public class Tasky {
     private Scanner scanner;
     private boolean quit = false;
 
+    public static void main(String[] args) {
+        new Tasky().loop();
+    }
+
     public Tasky() {
+        initialize();
+    }
+
+    private void initialize() {
+        initializeCommands();
+        initializeOrderingFunctions();
+    }
+
+    private void initializeCommands() {
         commands.put("list", this::listTasks);
         commands.put("filter", this::filterTasks);
         commands.put("add", this::createTask);
@@ -25,14 +38,13 @@ public class Tasky {
         commands.put("help", this::showHelp);
         commands.put("clear", this::clear);
         commands.put("exit", this::quit);
+    }
+
+    private void initializeOrderingFunctions() {
         orderingFunctions.put("t", (t1, t2) -> t1.getTitle().compareTo(t2.getTitle()));
         orderingFunctions.put("d", (t1, t2) -> t1.getDescription().compareTo(t2.getDescription()));
         orderingFunctions.put("z", (t1, t2) -> t1.getDueDate().compareTo(t2.getDueDate()));
         orderingFunctions.put("s", (t1, t2) -> t1.getState().compareTo(t2.getState()));
-    }
-
-    public static void main(String[] args) {
-        new Tasky().loop();
     }
 
     private void loop() {
@@ -40,13 +52,17 @@ public class Tasky {
         scanner = new Scanner(System.in);
         while (!quit) {
             System.out.print("> ");
-            String input = scanner.nextLine().toLowerCase();
-            if (commands.keySet().contains(input)) {
-                commands.get(input).execute();
-            } else {
-                System.out.println("- Unsupported command! -");
-                showHelp();
-            }
+            requestCommand();
+        }
+    }
+
+    private void requestCommand() {
+        String input = scanner.nextLine().toLowerCase();
+        if (commands.keySet().contains(input)) {
+            commands.get(input).execute();
+        } else {
+            System.out.println("- Unsupported command! -");
+            showHelp();
         }
     }
 
@@ -67,13 +83,6 @@ public class Tasky {
         printTasks(tasks);
     }
 
-    private void printTasks(List<Task> tasks) {
-        for (Task task : tasks) {
-            System.out.println(task);
-        }
-        System.out.println();
-    }
-
     private void sortTasks(List<Task> tasks) {
         System.out.print("Order by (t=title, d=description, z=date, s=state): ");
         String orderBy = scanner.nextLine();
@@ -87,17 +96,24 @@ public class Tasky {
         }
     }
 
+    private void printTasks(List<Task> tasks) {
+        for (Task task : tasks) {
+            System.out.println(task);
+        }
+        System.out.println();
+    }
+
     private void filterTasks() {
         System.out.print("Filter by state. ("+ String.join("|", TaskState.names()) +"): ");
         String filterCriteria = scanner.nextLine();
         List<Task> tasks = repository.getAll().stream()
-        .filter(t -> t.getState().name().toLowerCase().equals(filterCriteria.toLowerCase()))
+        .filter(t -> filterCriteria.isEmpty() || t.getState().name().toLowerCase().equals(filterCriteria.toLowerCase()))
         .collect(Collectors.toList());
         printTasks(tasks);
     }
 
     private void createTask() {
-        Task newTask = new Task(requestTitle(), requestDescription(), requestDueDate(), requestState());
+        Task newTask = requestTask();
         repository.add(newTask);
         System.out.println("Added: " + newTask.toString());
         System.out.println();
@@ -105,12 +121,11 @@ public class Tasky {
 
     private void modifyTask() {
         selectTask();
-        selectedTask.setTitle(requestTitle(selectedTask.getTitle()));
-        selectedTask.setDescription(requestDescription(selectedTask.getDescription()));
-        selectedTask.setDueDate(requestDueDate(selectedTask.getDueDateString()));
-        selectedTask.setState(requestState(selectedTask.getState().name()));
-        repository.update(selectedTask);
-        System.out.println("Updated: " + selectedTask.toString());
+        Task updatedTask = requestTask();
+        updatedTask.setId(selectedTask.getId());
+        repository.update(updatedTask);
+        selectedTask = null;
+        System.out.println("Updated: " + updatedTask.toString());
         System.out.println();
     }
 
@@ -130,6 +145,7 @@ public class Tasky {
         repository.delete(selectedTask);
         System.out.println("Deleted: " + selectedTask.toString());
         System.out.println();
+        selectedTask = null;
     }
 
     private void clear() {
@@ -147,6 +163,14 @@ public class Tasky {
         Collections.sort(commandStrings);
         System.out.println("Supported commands: " + String.join(" | ", commandStrings));
         System.out.println();
+    }
+
+    private Task requestTask() {
+        if (selectedTask != null) {
+            return new Task(requestTitle(selectedTask.getTitle()), requestDescription(selectedTask.getDescription()),
+            requestDueDate(selectedTask.getDueDateString()), requestState(selectedTask.getState().name()));
+        }
+        return new Task(requestTitle(), requestDescription(), requestDueDate(), requestState());
     }
 
     private String requestTitle() {

@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class Task {
-    private final UUID id;
+    private UUID id;
     private String title;
     private String description;
     private LocalDate dueDate;
@@ -14,7 +14,6 @@ public class Task {
     private static DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormat);
 
     public Task(String title, String description, String dueDateString, String stateString) {
-        this.id = UUID.randomUUID();
         this.setTitle(title);
         this.setDescription(description);
         this.setDueDate(dueDateString);
@@ -23,6 +22,10 @@ public class Task {
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getTitle() {
