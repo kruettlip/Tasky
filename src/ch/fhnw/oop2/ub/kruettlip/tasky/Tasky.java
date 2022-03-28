@@ -1,6 +1,5 @@
 package ch.fhnw.oop2.ub.kruettlip.tasky;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.stream.Collectors;
 public class Tasky {
     private IRepository<Task> repository = new InMemoryRepository();
     private Task selectedTask = null;
-    private Map<String, Command> commands = new HashMap<>();
+    private Map<Command, CommandInterface> commands = new HashMap<>();
     private Map<String, Comparator<Task>> orderingFunctions = new HashMap<>();
     private Scanner scanner;
     private boolean quit = false;
@@ -30,14 +29,14 @@ public class Tasky {
     }
 
     private void initializeCommands() {
-        commands.put("list", this::listTasks);
-        commands.put("filter", this::filterTasks);
-        commands.put("add", this::createTask);
-        commands.put("update", this::modifyTask);
-        commands.put("delete", this::deleteTask);
-        commands.put("help", this::showHelp);
-        commands.put("clear", this::clear);
-        commands.put("exit", this::quit);
+        commands.put(new Command("List all tasks.", "l", "ls", "list", "show"), this::listTasks);
+        commands.put(new Command("List all tasks filtered.", "f", "filter"), this::filterTasks);
+        commands.put(new Command("Create a new task.", "c", "create", "add"), this::createTask);
+        commands.put(new Command("Modify an existing task.", "m", "mod", "modify", "update"), this::modifyTask);
+        commands.put(new Command("Delete a task.", "d", "del", "delete"), this::deleteTask);
+        commands.put(new Command("Show this help.", "?", "h", "help"), this::showHelp);
+        commands.put(new Command("Clears the screen.", "cls", "clear"), this::clear);
+        commands.put(new Command("Exit this application.", "q", "quit", "exit"), this::quit);
     }
 
     private void initializeOrderingFunctions() {
@@ -57,12 +56,19 @@ public class Tasky {
     }
 
     private void requestCommand() {
-        String input = scanner.nextLine().toLowerCase();
-        if (commands.keySet().contains(input)) {
-            commands.get(input).execute();
-        } else {
-            System.out.println("- Unsupported command! -");
-            showHelp();
+        try (Scanner scanner = new Scanner(System.in)) {
+            quit = false;
+            while (!quit) {
+                System.out.print("What would you like to do? ");
+                String input = scanner.nextLine();
+                Command command = commands.keySet().stream().filter(k -> k.hasAlias(input.toLowerCase())).findFirst().orElse(null);
+                if (command != null) {
+                    commands.get(command).execute();
+                } else {
+                    System.out.println("Command not supported! Type '?' to see the available commands.");
+                    System.out.println();
+                }
+            }
         }
     }
 
@@ -159,9 +165,12 @@ public class Tasky {
     }
 
     private void showHelp() {
-        List<String> commandStrings = commands.keySet().stream().collect(Collectors.toList());
-        Collections.sort(commandStrings);
-        System.out.println("Supported commands: " + String.join(" | ", commandStrings));
+        System.out.println();
+        System.out.println("Supported commands:");
+        System.out.println("-------------------");
+        commands.keySet().stream()
+            .sorted((k1, k2) -> k1.getAliases().compareTo(k2.getAliases()))
+            .forEach(c -> System.out.println(c.getAliases() + "\t".repeat(3 - c.getAliases().length() / 15) + c.getDescription()));
         System.out.println();
     }
 
